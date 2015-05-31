@@ -222,15 +222,75 @@ namespace TexasHoldemChallenge
         }
 
         private bool isStraight(List<Card> cards) {
+            cards.Sort(new CardComparerValue());
+            int straightCount = 0;
+            int straightValue = (int)cards[0].Value;
+            int straigtValueToCheck;
 
+            // Check for straight with Aces high
+            for (int i = 1; i < cards.Count(); i++) {
+                straigtValueToCheck = (int)cards[i].Value;
+                if ((straightValue + 1) == straigtValueToCheck) {
+                    straightValue++;
+                    straightCount++;
+                    if (straightCount >= 4)
+                        return true;
+                } else {
+                    straightValue = straigtValueToCheck;
+                    straightCount = 0;
+                }
+            }
+            // Check for straight with Aces low
+            cards.Sort(new CardCompareAcesLow());
+            straightCount = 0;
+            straightValue = ((int)cards[0].Value == 14) ? 1 : (int)cards[0].Value;
+            for (int i = 1; i < cards.Count(); i++) {
+                straigtValueToCheck = ((int)cards[i].Value == 14) ? 1 : (int)cards[i].Value;
+                if ((straightValue + 1) == straigtValueToCheck) {
+                    straightValue++;
+                    straightCount++;
+                    if (straightCount >= 4)
+                        return true;
+                } else {
+                    straightValue = straigtValueToCheck;
+                    straightCount = 0;
+                }
+            }
+            return false;
+
+        
         }
 
         private bool isFullHouse(List<Card> cards) {
+            Dictionary<Values, int> count = new Dictionary<Values, int>();
+            bool threeOfAKind = false;
+            bool pair = false;
 
+            foreach (Card card in cards) {
+                if (count.ContainsKey(card.Value)) {
+                    count[card.Value]++;
+                } else {
+                    count.Add(card.Value, 1);
+                }
+            }
+            foreach (var item in count) {
+                if (item.Value == 3)
+                    threeOfAKind = true;
+                if (item.Value == 2)
+                    pair = true;
+            }
+            if (threeOfAKind && pair)
+                return true;
+            else
+                return false;
         }
 
         private bool isFourOfAKind(List<Card> cards) {
-
+            var count = cards.GroupBy(c => c.Value).Count();
+            if (count == 4)
+                return true;
+            else
+                return false;
         }
 
         private bool isThreeOfAKind(List<Card> cards) {
@@ -309,6 +369,20 @@ namespace TexasHoldemChallenge
         }
     }
 
+    class CardCompareAcesLow : IComparer<Card>
+        {
+            public int Compare(Card x, Card y) {
+                if (x.Value == Values.Ace)
+                    return -1;
+                if (x.Value > y.Value)
+                    return 1;
+                if (x.Value < y.Value)
+                    return -1;
+                else
+                    return 0;
+            }
+        }
+    
     class CardComparerSuit : IComparer<Card>
     {
         public int Compare(Card x, Card y) {
