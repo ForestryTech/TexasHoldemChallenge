@@ -22,7 +22,42 @@ namespace TexasHoldemChallenge
 
         public string Name {
             get {
-                return Value + " of " + Suit;
+                string cardValue;
+                string cardSuit = "";
+                switch ((int)Value) {
+                    case 11:
+                        cardValue = "J";
+                        break;
+                    case 12:
+                        cardValue = "Q";
+                        break;
+                    case 13:
+                        cardValue = "K";
+                        break;
+                    case 14:
+                        cardValue = "A";
+                        break;
+                    default:
+                        cardValue = ((int)Value).ToString();
+                        break;
+                }
+
+                switch ((int)Suit) {
+                    case 0:
+                        cardSuit = "\u2660";
+                        break;
+                    case 1:
+                        cardSuit = "\u2665";
+                        break;
+                    case 2:
+                        cardSuit = "\u2663";
+                        break;
+                    case 3:
+                        cardSuit = "\u2666";
+                        break;
+                }
+                
+                return cardValue + cardSuit;
             }
         }
 
@@ -67,6 +102,7 @@ namespace TexasHoldemChallenge
             cards = new List<Card>();
             playerName = name;
             PlayerHand = new Hand(this, game);
+            Playing = true;
         }
 
         public Player(List<Card> cards) {
@@ -125,7 +161,7 @@ namespace TexasHoldemChallenge
         public List<Card> allCards;
         public HandType Type {
             get {
-                
+                allCards.Clear();
                 foreach (Card card in player.cards) {
                     allCards.Add(card);
                 }
@@ -351,14 +387,43 @@ namespace TexasHoldemChallenge
             foreach (Player player in Players) {
                 Console.Write("Player {0} has a hand of {1}\n", player.Name, player.PlayerHand.Type);
                 Console.Write("Player cards: \n");
+                player.PlayerHand.allCards.Sort(new CardComparerValue());
                 foreach (Card c in player.PlayerHand.allCards) {
-                    Console.Write("\t" + c.ToString() + "\n");
+                    Console.Write("\t" + c.ToString() + " ");
                 }
+                Console.Write("\n\n");
             }
+            getWinner();
             // check for winner
         }
         
         public void Reset() {
+
+        }
+
+        private void getWinner() {
+            List<Player> winner = new List<Player>();
+            int winningHand;
+            int currentHand;
+            winningHand = (int)Players[0].PlayerHand.Type;
+            winner.Add(Players[0]);
+            for (int i = 1; i < Players.Count(); i++) {
+                currentHand = (int)Players[i].PlayerHand.Type;
+                if (currentHand < winningHand) {
+                    winner.Clear();
+                    winner.Add(Players[i]);
+                    winningHand = (int)Players[i].PlayerHand.Type;
+                } else if (currentHand == winningHand) {
+                    winner.Add(Players[i]);
+                }
+            }
+
+            if (winner.Count() == 1) {
+                Console.Write("Winner: {0} with a hand of {1}\n", winner[0].Name, winner[0].PlayerHand.Type);
+            }
+            if (winner.Count() > 1) {
+                Console.Write("Ther is a tie!\n");
+            }
 
         }
 
@@ -416,7 +481,7 @@ namespace TexasHoldemChallenge
 
         private void addPlayers() {
             Players.Add(new Player("Your ", this));
-            for (int i = 0; i < numberOfPlayers; i++) {
+            for (int i = 1; i < numberOfPlayers; i++) {
                 Players.Add(new Player("CPU " + (i + 1), this));
             }
         }
