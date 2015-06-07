@@ -158,37 +158,41 @@ namespace TexasHoldemChallenge
 
     class Hand
     {
-        public List<Card> allCards;
+        public List<Card> AllCards;
+        public List<Card> BestHand;
+        public List<Card> OtherCards;
+
         public HandType Type {
             get {
-                allCards.Clear();
+                AllCards.Clear();
                 foreach (Card card in player.cards) {
-                    allCards.Add(card);
+                    AllCards.Add(card);
                 }
                 foreach (Card card in game.CommunityCards) {
-                    allCards.Add(card);
+                    AllCards.Add(card);
                 }
 
-                if (isStraight(allCards) && isFlush(allCards))
+                if (isStraight(AllCards) && isFlush(AllCards))
                     return HandType.StraightFlush;
-                if (isFourOfAKind(allCards))
+                if (isFourOfAKind(AllCards))
                     return HandType.FourOfAKind;
-                if (isFullHouse(allCards))
+                if (isFullHouse(AllCards))
                     return HandType.FullHouse;
-                if (isFlush(allCards))
+                if (isFlush(AllCards))
                     return HandType.Flush;
-                if (isStraight(allCards))
+                if (isStraight(AllCards))
                     return HandType.Straight;
-                if (isThreeOfAKind(allCards))
+                if (isThreeOfAKind(AllCards))
                     return HandType.ThreeOfAKind;
-                if (isTwoPair(allCards))
+                if (isTwoPair(AllCards))
                     return HandType.TwoPair;
-                if (isPair(allCards))
+                if (isPair(AllCards))
                     return HandType.OnePair;
 
                 return HandType.HighCard;
-                
+
             }
+            private set;
         }
         
         public Card PrimaryHigh { get {
@@ -208,10 +212,84 @@ namespace TexasHoldemChallenge
         private Player player;
         private Game game;
 
+        public void SortHand() {
+            BestHand.Clear();
+            OtherCards.Clear();
+            
+            if (isFlush(AllCards) && isStraight(AllCards)) {
+                Suits suit = Suits.Clubs;
+                int[] cardsPerSuit = new int[4];
+                foreach (Card card in AllCards) {
+                    cardsPerSuit[(int)card.Suit]++;
+                    if (cardsPerSuit[(int)card.Suit] > 4) {
+                        suit = card.Suit;
+                        break;
+                    }
+                }
+                AllCards.Sort(new CardComparerSuit());
+                AllCards.Reverse();
+                int ctr = 0;
+                foreach (Card card in AllCards) {
+                    if ((card.Suit == suit) && ctr < 5) {
+                        BestHand.Add(card);
+                        ctr++;
+                    } else {
+                        OtherCards.Add(card);
+                    }
+                }
+                Type = HandType.StraightFlush;
+
+            } else if (isFourOfAKind(AllCards)) { 
+                
+
+            } else if (isFlush(AllCards)) {
+                Suits suit = Suits.Clubs;
+                int[] cardsPerSuit = new int[4];
+                foreach (Card card in AllCards) {
+                    cardsPerSuit[(int)card.Suit]++;
+                    if (cardsPerSuit[(int)card.Suit] > 4) {
+                        suit = card.Suit;
+                        break;
+                    }
+                }
+                AllCards.Sort(new CardComparerSuit());
+                AllCards.Reverse();
+                int ctr = 0;
+                foreach (Card card in AllCards) {
+                    if ((card.Suit == suit) && ctr < 5) {
+                        BestHand.Add(card);
+                        ctr++;
+                    } else {
+                        OtherCards.Add(card);
+                    }
+                }
+                Type = HandType.Flush; 
+            } 
+            else if (isStraight(AllCards)) {
+                AllCards.Sort(new CardComparerValue());
+
+
+            } 
+            else if(isFullHouse(AllCards)) {
+
+            } 
+            else if(isThreeOfAKind(AllCards)) {
+
+            } 
+            else if(isTwoPair(AllCards)) {
+
+            }
+            else if(isPair(AllCards)) {
+
+            }
+        }
+
         public Hand(Player player, Game game) {
             this.player = player;
             this.game = game;
-            allCards = new List<Card>();
+            AllCards = new List<Card>();
+            BestHand = new List<Card>();
+            OtherCards = new List<Card>();
         }
 
         private bool isFlush(List<Card> cards) {
@@ -387,8 +465,8 @@ namespace TexasHoldemChallenge
             foreach (Player player in Players) {
                 Console.Write("Player {0} has a hand of {1}\n", player.Name, player.PlayerHand.Type);
                 Console.Write("Player cards: \n");
-                player.PlayerHand.allCards.Sort(new CardComparerValue());
-                foreach (Card c in player.PlayerHand.allCards) {
+                player.PlayerHand.AllCards.Sort(new CardComparerValue());
+                foreach (Card c in player.PlayerHand.AllCards) {
                     Console.Write("\t" + c.ToString() + " ");
                 }
                 Console.Write("\n\n");
@@ -609,4 +687,59 @@ namespace TexasHoldemChallenge
             }
         }
     }
+
+   /* class TieHandComparer : IComparer<Hand>
+    {
+
+        public int Compare(Hand x, Hand y) {
+            if (x.Type > y.Type)
+                return 1;
+            else if (x.Type < y.Type)
+                return -1;
+            else {
+                switch (x.Type) {
+                    case HandType.StraightFlush:
+                        List<Card> xHand = new List<Card>();
+                        List<Card> yHand = new List<Card>();
+                        List<Card> xHandOther = new List<Card>();
+                        List<Card> yHandOther = new List<Card>();
+                        Suits xSuit;
+                        Suits ySuit;
+
+                        int[] xCount = new int[4];
+                        int[] yCount = new int[4];
+                        foreach (Card card in x.AllCards) {
+                            xCount[(int)card.Suit]++;
+                            if(xCount[(int)card.Suit] >= 5)
+                                xSuit = card.Suit;
+                        }
+                        foreach (Card card in y.AllCards)
+	                    {
+		                    yCount[(int)card.Suit]++;
+                            if(yCount[(int)card.Suit] >= 5)
+                                ySuit = card.Suit;
+                        }
+
+                        break;
+                    case HandType.FourOfAKind:
+                        break;
+                    case HandType.FullHouse:
+                        break;
+                    case HandType.Flush:
+                        break;
+                    case HandType.Straight:
+                        break;
+                    case HandType.ThreeOfAKind:
+                        break;
+                    case HandType.TwoPair:
+                        break;
+                    case HandType.OnePair:
+                        break;
+                    default:
+                        break;
+                       
+                }
+            }
+        }
+    }*/
 }
