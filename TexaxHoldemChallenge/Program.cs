@@ -217,58 +217,19 @@ namespace TexasHoldemChallenge
             OtherCards.Clear();
             
             if (isFlush(AllCards) && isStraight(AllCards)) {
-                Suits suit = Suits.Clubs;
-                int[] cardsPerSuit = new int[4];
-                foreach (Card card in AllCards) {
-                    cardsPerSuit[(int)card.Suit]++;
-                    if (cardsPerSuit[(int)card.Suit] > 4) {
-                        suit = card.Suit;
-                        break;
-                    }
-                }
-                AllCards.Sort(new CardComparerSuit());
-                AllCards.Reverse();
-                int ctr = 0;
-                foreach (Card card in AllCards) {
-                    if ((card.Suit == suit) && ctr < 5) {
-                        BestHand.Add(card);
-                        ctr++;
-                    } else {
-                        OtherCards.Add(card);
-                    }
-                }
+                sortStraight();
                 Type = HandType.StraightFlush;
 
             } else if (isFourOfAKind(AllCards)) { 
                 
 
             } else if (isFlush(AllCards)) {
-                Suits suit = Suits.Clubs;
-                int[] cardsPerSuit = new int[4];
-                foreach (Card card in AllCards) {
-                    cardsPerSuit[(int)card.Suit]++;
-                    if (cardsPerSuit[(int)card.Suit] > 4) {
-                        suit = card.Suit;
-                        break;
-                    }
-                }
-                AllCards.Sort(new CardComparerSuit());
-                AllCards.Reverse();
-                int ctr = 0;
-                foreach (Card card in AllCards) {
-                    if ((card.Suit == suit) && ctr < 5) {
-                        BestHand.Add(card);
-                        ctr++;
-                    } else {
-                        OtherCards.Add(card);
-                    }
-                }
+                sortFlush();
                 Type = HandType.Flush; 
             } 
             else if (isStraight(AllCards)) {
-                AllCards.Sort(new CardComparerValue());
-
-
+                sortStraight();
+                Type = HandType.Straight;
             } 
             else if(isFullHouse(AllCards)) {
 
@@ -282,6 +243,103 @@ namespace TexasHoldemChallenge
             else if(isPair(AllCards)) {
 
             }
+        }
+
+        private void sortStraight() {
+            AllCards.Sort(new CardComparerValue());
+            int straightCount = 0;
+            int startValue = 0;
+            int straightValue = (int)AllCards[0].Value;
+            int straigtValueToCheck;
+
+            // Check for straight with Aces high
+            for (int i = 1; i < AllCards.Count(); i++) {
+                straigtValueToCheck = (int)AllCards[i].Value;
+
+                if ((straightValue - 1) == straigtValueToCheck) {
+                    straightValue--;
+                    straightCount++;
+                    if (straightCount >= 4) {
+                        for (int x = 0; x < AllCards.Count; x++) {
+                            if (x == startValue || x == (startValue + 1) || x == (startValue + 2) || x == (startValue + 3) || x == (startValue + 4))
+                                BestHand.Add(AllCards[x]);
+                            else
+                                OtherCards.Add(AllCards[x]);
+
+                        }
+                        return;
+                    }
+                } else {
+                    straightValue = straigtValueToCheck;
+                    startValue = i;
+                    straightCount = 0;
+                }
+            }
+            // Check for straight with Aces low
+            AllCards.Sort(new CardCompareAcesLow());
+            straightCount = 0;
+            startValue = 0;
+            straightValue = ((int)AllCards[0].Value == 14) ? 1 : (int)AllCards[0].Value;
+            for (int i = 1; i < AllCards.Count(); i++) {
+                straigtValueToCheck = ((int)AllCards[i].Value == 14) ? 1 : (int)AllCards[i].Value;
+                if ((straightValue - 1) == straigtValueToCheck) {
+                    straightValue--;
+                    straightCount++;
+                    if (straightCount >= 4) {
+                        for (int x = 0; x < AllCards.Count; x++) {
+                            if (x == startValue || x == (startValue + 1) || x == (startValue + 2) || x == (startValue + 3) || x == (startValue + 4))
+                                BestHand.Add(AllCards[x]);
+                            else
+                                OtherCards.Add(AllCards[x]);
+                        }
+                        return;
+                    }
+                } else {
+                    straightValue = straigtValueToCheck;
+                    startValue = i;
+                    straightCount = 0;
+                }
+            }
+        }
+
+        private void sortFlush() {
+            Suits suit = Suits.Clubs;
+            int[] cardsPerSuit = new int[4];
+            foreach (Card card in AllCards) {
+                cardsPerSuit[(int)card.Suit]++;
+                if (cardsPerSuit[(int)card.Suit] > 4) {
+                    suit = card.Suit;
+                    break;
+                }
+            }
+            AllCards.Sort(new CardComparerValue());
+            AllCards.Reverse();
+            int ctr = 0;
+            foreach (Card card in AllCards) {
+                if ((card.Suit == suit) && ctr < 5) {
+                    BestHand.Add(card);
+                    ctr++;
+                } else {
+                    OtherCards.Add(card);
+                }
+            }
+        }
+
+        private void sortFourOfAKind() {
+            Dictionary<Values, int> count = new Dictionary<Values, int>();
+            Values fourOfAKindValue = Values.Ace;
+            count = getCardDictionary(AllCards);
+            foreach (var item in count) {
+                if (item.Value == 4)
+                    fourOfAKindValue = (Values)item.Key;
+            }
+            foreach (Card card in AllCards) {
+                if (card.Value == fourOfAKindValue)
+                    BestHand.Add(card);
+                else
+                    OtherCards.Add(card);
+            }
+            
         }
 
         public Hand(Player player, Game game) {
@@ -311,8 +369,8 @@ namespace TexasHoldemChallenge
             // Check for straight with Aces high
             for (int i = 1; i < cards.Count(); i++) {
                 straigtValueToCheck = (int)cards[i].Value;
-                if ((straightValue + 1) == straigtValueToCheck) {
-                    straightValue++;
+                if ((straightValue - 1) == straigtValueToCheck) {
+                    straightValue--;
                     straightCount++;
                     if (straightCount >= 4)
                         return true;
@@ -327,8 +385,8 @@ namespace TexasHoldemChallenge
             straightValue = ((int)cards[0].Value == 14) ? 1 : (int)cards[0].Value;
             for (int i = 1; i < cards.Count(); i++) {
                 straigtValueToCheck = ((int)cards[i].Value == 14) ? 1 : (int)cards[i].Value;
-                if ((straightValue + 1) == straigtValueToCheck) {
-                    straightValue++;
+                if ((straightValue - 1) == straigtValueToCheck) {
+                    straightValue--;
                     straightCount++;
                     if (straightCount >= 4)
                         return true;
@@ -631,8 +689,12 @@ namespace TexasHoldemChallenge
     {
         public int Compare(Card x, Card y) {
             if (x.Value > y.Value)
-                return 1;
+                return -1;
             if (x.Value < y.Value)
+                return 1;
+            if (x.Suit > y.Suit)
+                return 1;
+            if (x.Suit < y.Suit)
                 return -1;
             else
                 return 0;
@@ -641,17 +703,21 @@ namespace TexasHoldemChallenge
 
     class CardCompareAcesLow : IComparer<Card>
         {
-            public int Compare(Card x, Card y) {
-                if (x.Value == Values.Ace)
-                    return -1;
-                if (x.Value > y.Value)
-                    return 1;
-                if (x.Value < y.Value)
-                    return -1;
-                else
-                    return 0;
-            }
+        public int Compare(Card x, Card y) {
+            if (y.Value == Values.Ace)
+                return -1;
+            if (x.Value > y.Value)
+                return -1;
+            if (x.Value < y.Value)
+                return 1;
+            if (x.Suit > y.Suit)
+                return 1;
+            if (x.Suit < y.Suit)
+                return -1;
+            else
+                return 0;
         }
+    }
     
     class CardComparerSuit : IComparer<Card>
     {
@@ -664,6 +730,7 @@ namespace TexasHoldemChallenge
                 return 0;
         }
     }
+
     class HandComparer : IComparer<Hand>
     {
         public int Compare(Hand x, Hand y) {
