@@ -59,6 +59,7 @@ namespace TexasHoldemChallenge
 
         private void getWinner() {
             List<Player> winner = new List<Player>();
+            List<Player> finalWinner = new List<Player>();
             int winningHand;
             int currentHand;
             winningHand = (int)Players[0].PlayerHand.Type;
@@ -82,9 +83,53 @@ namespace TexasHoldemChallenge
                 foreach (Player player in winner) {
                     player.PlayerHand.BestHand.Sort(new CardComparerValue());
                     Console.WriteLine("   {0} has a {1}", player.Name, player.PlayerHand.Type);
+                    
                 }
+                finalWinner = tieBreaker(winner);
+                if (finalWinner.Count > 1) {
+                    Console.WriteLine("\n********** A Tie! Pot is split between **********\n");
+                    foreach (Player p in finalWinner) {
+                        Console.WriteLine(" {0} has a {1}", p.Name, p.PlayerHand.Type);
+                    }
+                } else {
+                    Console.WriteLine("A winner?\n");
+                    foreach (Player p in finalWinner) {
+                        Console.WriteLine(" {0} has a {1}", p.Name, p.PlayerHand.Type);
+                    }
+                }
+                
             }
 
+        }
+
+        private List<Player> tieBreaker(List<Player> winner) {
+            int pToCompare;
+            int compareResult = 0;
+            List<Player> tempList = new List<Player>();
+            tempList.Add(winner[0]);
+            for (int i = 0; i < winner.Count; i++) {
+                pToCompare = ((i + 1) < winner.Count) ? (i + 1) : winner.Count - 1;
+                compareResult = compareHand(tempList[0].PlayerHand, winner[pToCompare].PlayerHand);
+                if (compareResult < 1) {
+                    tempList.Clear();
+                    tempList.Add(winner[pToCompare]);
+                } else if (compareResult == 0)
+                    tempList.Add(winner[pToCompare]);
+
+            }
+            return tempList;
+        }
+
+        private int compareHand(Hand p1, Hand p2) {
+            p1.BestHand.Sort(new CardComparerValue());
+            p2.BestHand.Sort(new CardComparerValue());
+            for (int i = 0; i < 5; i++) {
+                if (p1.BestHand[i].Value > p2.BestHand[i].Value)
+                    return 1;
+                else if (p1.BestHand[i].Value < p2.BestHand[i].Value)
+                    return -1;
+            }
+            return 0;
         }
 
         private void showCards(int mode) {

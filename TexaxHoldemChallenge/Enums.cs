@@ -8,7 +8,7 @@ namespace TexasHoldemChallenge
 {
     enum Values
     {
-        Ace = 14,
+        
         Two = 2,
         Three = 3,
         Four = 4,
@@ -21,6 +21,7 @@ namespace TexasHoldemChallenge
         Jack = 11,
         Queen = 12,
         King = 13,
+        Ace = 14,
     }
 
     enum Suits
